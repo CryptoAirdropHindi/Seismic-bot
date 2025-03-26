@@ -155,7 +155,6 @@ interact_contract() {
     read -p "Press Enter to continue..."
 }
 
-
 # ----------------------------
 # Check Logs
 # ----------------------------
@@ -206,11 +205,11 @@ display_ascii() {
     echo -e "${BLUE}=======================================================${NC}"
     echo -e "${GREEN}       ✨ Seismic Node Installation Script ✨${NC}"
     echo -e "${BLUE}=======================================================${NC}"
-    echo -e "${CYAN}=== Telegram Channel: CryptoAirdropHindi @CryptoAirdropHindi ===${NC}"  
-    echo -e "${CYAN}=== Follow us on social media for updates and more ===${NC}"
-    echo -e "=== 📱 Telegram: https://t.me/CryptoAirdropHindi6 ==="
-    echo -e "=== 🎥 YouTube: https://www.youtube.com/@CryptoAirdropHindi6 ==="
-    echo -e "=== 💻 GitHub Repo: https://github.com/CryptoAirdropHindi/ ==="
+    echo -e "${CYAN} Telegram Channel: CryptoAirdropHindi @CryptoAirdropHindi ${NC}"  
+    echo -e "${CYAN} Follow us on social media for updates and more ${NC}"
+    echo -e " 📱 Telegram: https://t.me/CryptoAirdropHindi6 "
+    echo -e " 🎥 YouTube: https://www.youtube.com/@CryptoAirdropHindi6 "
+    echo -e " 💻 GitHub Repo: https://github.com/CryptoAirdropHindi/ "
 }
 
 # ----------------------------
