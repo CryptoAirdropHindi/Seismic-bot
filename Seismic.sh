@@ -194,8 +194,7 @@ check_logs() {
 # ----------------------------
 # ASCII Art Header
 # ----------------------------
-function main_menu() {
-    while true; do
+display_ascii() {
     clear
     echo -e "${CYAN}"
     echo -e "    ${RED}██╗  ██╗ █████╗ ███████╗ █████╗ ███╗   ██╗${NC}"
