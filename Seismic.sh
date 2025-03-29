@@ -1,199 +1,16 @@
 #!/bin/bash
 
-# ----------------------------
-# Colors for terminal output
-# ----------------------------
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 MAGENTA='\033[1;35m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
-RESET='\033[0m'
 
-# ----------------------------
-# Install Seismic Foundry
-# ----------------------------
-install_seismic() {
-    echo -e "${YELLOW}🚀 Installing Seismic Foundry...${NC}"
-
-    # 0. Install system dependencies
-    echo -e "${CYAN}🔧 Installing system dependencies...${NC}"
-    if [[ -f /etc/debian_version ]]; then
-        sudo apt update
-        sudo apt install -y build-essential
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        # Ensure Xcode command line tools are installed on macOS
-        xcode-select --install || true
-    fi
-
-    # 1. Install Rust (if not installed)
-    if ! command -v rustc &> /dev/null; then
-        echo -e "${CYAN}🔧 Installing Rust...${NC}"
-        curl https://sh.rustup.rs -sSf | sh -s -- -y
-        source "$HOME/.cargo/env"
-    else
-        echo -e "${GREEN}✅ Rust already installed.${NC}"
-    fi
-
-    # 2. Install jq (JSON processor)
-    if ! command -v jq &> /dev/null; then
-        echo -e "${CYAN}🔧 Installing jq...${NC}"
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            brew install jq
-        elif [[ -f /etc/debian_version ]]; then
-            sudo apt-get update && sudo apt-get install -y jq
-        else
-            echo -e "${RED}❌ Unsupported OS. Install jq manually: https://stedolan.github.io/jq/download/${NC}"
-            exit 1
-        fi
-    else
-        echo -e "${GREEN}✅ jq already installed.${NC}"
-    fi
-
-    # 3. Install sfoundryup
-    echo -e "${CYAN}🔧 Installing sfoundryup...${NC}"
-    curl -L \
-         -H "Accept: application/vnd.github.v3.raw" \
-         "https://api.github.com/repos/SeismicSystems/seismic-foundry/contents/sfoundryup/install?ref=seismic" | bash
-    source ~/.bashrc || source ~/.zshrc
-
-    # 4. Run sfoundryup
-    echo -e "${YELLOW}⏳ Setting up Seismic Foundry (may take 5-60 mins)...${NC}"
-    sfoundryup
-
-    echo -e "${GREEN}🎉 Seismic Foundry installed successfully!${NC}"
-    read -p "Press Enter to continue..."
-}
-
-# ----------------------------
-# Deploy Encrypted Contract
-# ----------------------------
-deploy_contract() {
-    echo -e "${YELLOW}🚀 Deploying encrypted contract...${NC}"
-
-    # 5. Clone repository
-    if [ ! -d "try-devnet" ]; then
-        echo -e "${CYAN}🔧 Cloning try-devnet repository...${NC}"
-        git clone --recurse-submodules https://github.com/SeismicSystems/try-devnet.git
-    else
-        echo -e "${GREEN}✅ try-devnet already exists. Pulling latest changes...${NC}"
-        cd try-devnet && git pull && git submodule update --init --recursive && cd ..
-    fi
-
-    # 6. Deploy contract
-    echo -e "${CYAN}🔧 Deploying contract...${NC}"
-    cd try-devnet/packages/contract/
-    bash script/deploy.sh
-    cd ../../
-
-    echo -e "${GREEN}🎉 Contract deployed successfully!${NC}"
-    read -p "Press Enter to continue..."
-}
-
-# ----------------------------
-# Interact with Contract
-# ----------------------------
-interact_contract() {
-    echo -e "${YELLOW}🔗 Interacting with contract...${NC}"
-
-    # Check if try-devnet directory exists
-    if [ ! -d "try-devnet" ]; then
-        echo -e "${RED}❌ try-devnet directory not found. Please deploy a contract first (Option 2).${NC}"
-        read -p "Press Enter to continue..."
-        return
-    fi
-
-    # Check if cli directory exists
-    if [ ! -d "try-devnet/packages/cli" ]; then
-        echo -e "${RED}❌ CLI package directory not found. The repository might not have been cloned properly.${NC}"
-        read -p "Press Enter to continue..."
-        return
-    fi
-
-    # Update and install zip (if not installed)
-    echo -e "${CYAN}🔄 Updating packages and installing zip...${NC}"
-    sudo apt update
-    sudo apt install zip -y
-
-    # 1. Install Bun (if not installed)
-    if ! command -v bun &> /dev/null; then
-        echo -e "${CYAN}🔧 Installing Bun...${NC}"
-        curl -fsSL https://bun.sh/install | bash
-        source ~/.bashrc || source ~/.zshrc
-    else
-        echo -e "${GREEN}✅ Bun already installed.${NC}"
-    fi
-
-    # 2. Install dependencies
-    echo -e "${CYAN}📦 Installing Node dependencies...${NC}"
-    cd try-devnet/packages/cli/
-    
-    if [ ! -f "package.json" ]; then
-        echo -e "${RED}❌ package.json not found in CLI directory.${NC}"
-        cd ../../../
-        read -p "Press Enter to continue..."
-        return
-    fi
-    
-    bun install
-
-    # 3. Send transactions
-    echo -e "${YELLOW}💸 Sending test transactions...${NC}"
-    if [ ! -f "script/transact.sh" ]; then
-        echo -e "${RED}❌ transact.sh script not found.${NC}"
-        cd ../../../
-        read -p "Press Enter to continue..."
-        return
-    fi
-    
-    bash script/transact.sh
-
-    cd ../../../
-    echo -e "${GREEN}🎉 Transactions executed successfully!${NC}"
-    read -p "Press Enter to continue..."
-}
-
-# ----------------------------
-# Check Logs
-# ----------------------------
-check_logs() {
-    echo -e "${YELLOW}📜 Checking logs...${NC}"
-    
-    # Check if try-devnet directory exists
-    if [ ! -d "try-devnet" ]; then
-        echo -e "${RED}❌ try-devnet directory not found. Please deploy a contract first.${NC}"
-        read -p "Press Enter to continue..."
-        return
-    fi
-    
-    # Check for log files
-    if [ -f "try-devnet/packages/contract/logs/deploy.log" ]; then
-        echo -e "${GREEN}✅ Deployment logs found:${NC}"
-        echo -e "${CYAN}====== Deployment Logs ======${NC}"
-        cat try-devnet/packages/contract/logs/deploy.log
-        echo -e "${CYAN}============================${NC}"
-    else
-        echo -e "${YELLOW}⚠️ No deployment logs found.${NC}"
-    fi
-    
-    if [ -f "try-devnet/packages/cli/logs/transactions.log" ]; then
-        echo -e "${GREEN}✅ Transaction logs found:${NC}"
-        echo -e "${CYAN}====== Transaction Logs ======${NC}"
-        cat try-devnet/packages/cli/logs/transactions.log
-        echo -e "${CYAN}=============================${NC}"
-    else
-        echo -e "${YELLOW}⚠️ No transaction logs found.${NC}"
-    fi
-    
-    read -p "Press Enter to continue..."
-}
-
-# ----------------------------
-# ASCII Art Header
-# ----------------------------
-display_ascii() {
+# Display header
+display_header() {
     clear
     echo -e "${CYAN}"
     echo -e "    ${RED}██╗  ██╗ █████╗ ███████╗ █████╗ ███╗   ██╗${NC}"
@@ -212,18 +29,149 @@ display_ascii() {
     echo -e " 💻 GitHub Repo: https://github.com/CryptoAirdropHindi/ "
 }
 
+# Check and install dependencies
+install_dependencies() {
+    echo -e "${CYAN}Checking system dependencies...${NC}"
+    
+    # Check and install Rust
+    if ! command -v rustc &> /dev/null; then
+        echo -e "${YELLOW}Installing Rust...${NC}"
+        curl https://sh.rustup.rs -sSf | sh -s -- -y
+        source "$HOME/.cargo/env"
+    else
+        echo -e "${GREEN}✓ Rust already installed${NC}"
+    fi
+    
+    # Check and install jq
+    if ! command -v jq &> /dev/null; then
+        echo -e "${YELLOW}Installing jq...${NC}"
+        if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            sudo apt-get update && sudo apt-get install -y jq
+        elif [[ "$OSTYPE" == "darwin"* ]]; then
+            brew install jq
+        else
+            echo -e "${RED}✗ Unsupported OS. Please install jq manually.${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${GREEN}✓ jq already installed${NC}"
+    fi
+    
+    # Check and install unzip
+    if ! command -v unzip &> /dev/null; then
+        echo -e "${YELLOW}Installing unzip...${NC}"
+        if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            sudo apt-get install -y unzip
+        elif [[ "$OSTYPE" == "darwin"* ]]; then
+            brew install unzip
+        fi
+    else
+        echo -e "${GREEN}✓ unzip already installed${NC}"
+    fi
+}
+
+# Install Seismic Foundry
+install_seismic() {
+    echo -e "${CYAN}Installing Seismic Foundry...${NC}"
+    
+    # Download and install
+    curl -L -H "Accept: application/vnd.github.v3.raw" \
+        "https://api.github.com/repos/SeismicSystems/seismic-foundry/contents/sfoundryup/install?ref=seismic" | bash
+    
+    # Update PATH
+    export PATH="$HOME/.seismic/bin:$PATH"
+    source ~/.bashrc 2>/dev/null || source ~/.zshrc 2>/dev/null
+    
+    # Run sfoundryup
+    echo -e "${YELLOW}Setting up Seismic Foundry (this may take a while)...${NC}"
+    sfoundryup
+    
+    echo -e "${GREEN}✓ Seismic Foundry installed successfully!${NC}"
+}
+
+# Deploy contract
+deploy_contract() {
+    echo -e "${CYAN}Starting contract deployment...${NC}"
+    
+    # Clone repo if not exists
+    if [ ! -d "try-devnet" ]; then
+        echo -e "${YELLOW}Cloning try-devnet repository...${NC}"
+        git clone --recurse-submodules https://github.com/SeismicSystems/try-devnet.git
+    else
+        echo -e "${GREEN}✓ try-devnet repository already exists${NC}"
+    fi
+    
+    # Deploy
+    cd try-devnet/packages/contract/ || { echo -e "${RED}✗ Failed to enter contract directory${NC}"; return; }
+    echo -e "${YELLOW}Deploying contract...${NC}"
+    bash script/deploy.sh
+    
+    echo -e "${GREEN}✓ Contract deployed successfully!${NC}"
+    cd ../../../
+}
+
+# Interact with contract
+interact_contract() {
+    echo -e "${CYAN}Preparing contract interaction...${NC}"
+    
+    if [ ! -d "try-devnet/packages/cli" ]; then
+        echo -e "${RED}✗ Error: try-devnet not found. Deploy a contract first.${NC}"
+        return
+    fi
+    
+    cd try-devnet/packages/cli/ || { echo -e "${RED}✗ Failed to enter CLI directory${NC}"; return; }
+    
+    # Install Bun if needed
+    if ! command -v bun &> /dev/null; then
+        echo -e "${YELLOW}Installing Bun...${NC}"
+        curl -fsSL https://bun.sh/install | bash
+        export PATH="$HOME/.bun/bin:$PATH"
+    else
+        echo -e "${GREEN}✓ Bun already installed${NC}"
+    fi
+    
+    # Install dependencies and run
+    echo -e "${YELLOW}Installing dependencies...${NC}"
+    bun install
+    
+    echo -e "${YELLOW}Executing transactions...${NC}"
+    bash script/transact.sh
+    
+    echo -e "${GREEN}✓ Contract interaction complete!${NC}"
+    cd ../../../
+}
+
+# Check logs
+check_logs() {
+    echo -e "${CYAN}Checking logs...${NC}"
+    
+    if [ -f "try-devnet/packages/contract/logs/deploy.log" ]; then
+        echo -e "\n${YELLOW}=== Deployment Logs ===${NC}"
+        tail -n 10 try-devnet/packages/contract/logs/deploy.log
+    else
+        echo -e "${RED}✗ No deployment logs found${NC}"
+    fi
+    
+    if [ -f "try-devnet/packages/cli/logs/transactions.log" ]; then
+        echo -e "\n${YELLOW}=== Transaction Logs ===${NC}"
+        tail -n 10 try-devnet/packages/cli/logs/transactions.log
+    else
+        echo -e "${RED}✗ No transaction logs found${NC}"
+    fi
+}
+
 # Show menu with box design
 show_menu() {
     display_header
     echo -e "${CYAN}╔════════════════════════════════════════════╗"
-    echo -e "║               M A I N   M E N U             ║"
-    echo -e "╠════════════════════════════════════════════╣"
+    echo -e "║               M A I N   M E N U                   ║"
+    echo -e "╠═══════════════════════════════════════════════════╣"
     echo -e "║${YELLOW} 1.${NC} Install Dependencies & Seismic Foundry ${CYAN}║"
-    echo -e "║${YELLOW} 2.${NC} Deploy Contract                       ${CYAN}║"
-    echo -e "║${YELLOW} 3.${NC} Interact with Contract                ${CYAN}║"
-    echo -e "║${YELLOW} 4.${NC} Check Logs                            ${CYAN}║"
-    echo -e "║${YELLOW} 5.${NC} Exit                                  ${CYAN}║"
-    echo -e "╚════════════════════════════════════════════╝${NC}"
+    echo -e "║${YELLOW} 2.${NC} Deploy Contract                        ${CYAN}║"
+    echo -e "║${YELLOW} 3.${NC} Interact with Contract                 ${CYAN}║"
+    echo -e "║${YELLOW} 4.${NC} Check Logs                             ${CYAN}║"
+    echo -e "║${YELLOW} 5.${NC} Exit                                   ${CYAN}║"
+    echo -e "╚════════════════════════════════════════════════════════════════╝${NC}"
     echo -e ""
     echo -ne "${YELLOW}❯ Select an option [${GREEN}1-5${YELLOW}]: ${NC}"
 }
@@ -253,7 +201,7 @@ main_menu() {
                 exit 0
                 ;;
             *)
-                echo -e "\n${RED}Invalid option. Please enter 1-5.${NC}"
+                echo -e "\n${RED}✗ Invalid option. Please enter 1-5.${NC}"
                 sleep 1
                 ;;
         esac
