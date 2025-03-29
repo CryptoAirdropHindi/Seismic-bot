@@ -212,46 +212,59 @@ display_ascii() {
     echo -e " 💻 GitHub Repo: https://github.com/CryptoAirdropHindi/ "
 }
 
-# ----------------------------
-# Main Menu
-# ----------------------------
+# Show menu with box design
 show_menu() {
-    display_ascii
-    echo -e "    ${YELLOW}Choose an operation:${RESET}"
-    echo -e "    ${CYAN}1.${RESET} Install Seismic Foundry"
-    echo -e "    ${CYAN}2.${RESET} Deploy Encrypted Contract"
-    echo -e "    ${CYAN}3.${RESET} Interact with Contract"
-    echo -e "    ${CYAN}4.${RESET} Check Logs"
-    echo -e "    ${CYAN}5.${RESET} Exit"
-    echo -ne "    ${YELLOW}Enter your choice [1-5]: ${RESET}"
+    display_header
+    echo -e "${CYAN}╔════════════════════════════════════════════╗"
+    echo -e "║               M A I N   M E N U             ║"
+    echo -e "╠════════════════════════════════════════════╣"
+    echo -e "║${YELLOW} 1.${NC} Install Dependencies & Seismic Foundry ${CYAN}║"
+    echo -e "║${YELLOW} 2.${NC} Deploy Contract                       ${CYAN}║"
+    echo -e "║${YELLOW} 3.${NC} Interact with Contract                ${CYAN}║"
+    echo -e "║${YELLOW} 4.${NC} Check Logs                            ${CYAN}║"
+    echo -e "║${YELLOW} 5.${NC} Exit                                  ${CYAN}║"
+    echo -e "╚════════════════════════════════════════════╝${NC}"
+    echo -e ""
+    echo -ne "${YELLOW}❯ Select an option [${GREEN}1-5${YELLOW}]: ${NC}"
 }
 
-# ----------------------------
-# Main Loop
-# ----------------------------
-while true; do
-    show_menu
-    read choice
-    case $choice in
-        1) 
-            install_seismic
-            ;;
-        2) 
-            deploy_contract
-            ;;
-        3) 
-            interact_contract
-            ;;
-        4)
-            check_logs
-            ;;
-        5)
-            echo -e "${RED}👋 Exiting...${RESET}"
-            exit 0
-            ;;
-        *)
-            echo -e "${RED}❌ Invalid option. Please try again.${RESET}"
-            read -p "Press Enter to continue..."
-            ;;
-    esac
-done
+# Main menu function
+main_menu() {
+    while true; do
+        show_menu
+        read -r choice
+        
+        case $choice in
+            1)
+                install_dependencies
+                install_seismic
+                ;;
+            2)
+                deploy_contract
+                ;;
+            3)
+                interact_contract
+                ;;
+            4)
+                check_logs
+                ;;
+            5)
+                echo -e "\n${GREEN}Exiting script. Goodbye!${NC}"
+                exit 0
+                ;;
+            *)
+                echo -e "\n${RED}Invalid option. Please enter 1-5.${NC}"
+                sleep 1
+                ;;
+        esac
+        
+        # Only pause if not exiting
+        if [[ "$choice" != "5" ]]; then
+            echo -e "\n${CYAN}Press Enter to return to menu...${NC}"
+            read -r
+        fi
+    done
+}
+
+# Start script
+main_menu
