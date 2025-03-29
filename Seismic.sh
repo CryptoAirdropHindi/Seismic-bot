@@ -164,14 +164,14 @@ check_logs() {
 show_menu() {
     display_header
     echo -e "${CYAN}╔════════════════════════════════════════════╗"
-    echo -e "║               M A I N   M E N U                   ║"
-    echo -e "╠═══════════════════════════════════════════════════╣"
+    echo -e "║               M A I N   M E N U             ║"
+    echo -e "╠════════════════════════════════════════════╣"
     echo -e "║${YELLOW} 1.${NC} Install Dependencies & Seismic Foundry ${CYAN}║"
-    echo -e "║${YELLOW} 2.${NC} Deploy Contract                        ${CYAN}║"
-    echo -e "║${YELLOW} 3.${NC} Interact with Contract                 ${CYAN}║"
-    echo -e "║${YELLOW} 4.${NC} Check Logs                             ${CYAN}║"
-    echo -e "║${YELLOW} 5.${NC} Exit                                   ${CYAN}║"
-    echo -e "╚════════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "║${YELLOW} 2.${NC} Deploy Contract                       ${CYAN}║"
+    echo -e "║${YELLOW} 3.${NC} Interact with Contract                ${CYAN}║"
+    echo -e "║${YELLOW} 4.${NC} Check Logs                            ${CYAN}║"
+    echo -e "║${YELLOW} 5.${NC} Exit                                  ${CYAN}║"
+    echo -e "╚════════════════════════════════════════════╝${NC}"
     echo -e ""
     echo -ne "${YELLOW}❯ Select an option [${GREEN}1-5${YELLOW}]: ${NC}"
 }
